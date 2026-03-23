@@ -9,13 +9,12 @@ const port = process.env.PORT || 3000;
 
 app.use(cors())
 
-app.use(express.json()); 
+app.use(express.json());
 connectDatabase()
 
-app.use("/api",route)
+app.use("/api", route)
 
 
 app.listen(port, () => {
     console.log(`Server Connected In Port ${port}`);
-
 })
