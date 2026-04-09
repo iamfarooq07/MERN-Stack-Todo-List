@@ -1,12 +1,22 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Plus, Calendar } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FiPlus, FiCalendar, FiChevronDown } from "react-icons/fi";
 
 const priorities = ["low", "medium", "high"];
-const priorityColors = {
-  low: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  medium: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  high: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+
+const priorityConfig = {
+  low: {
+    active: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
+    dot: "bg-emerald-500",
+  },
+  medium: {
+    active: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 border-amber-200 dark:border-amber-800",
+    dot: "bg-amber-500",
+  },
+  high: {
+    active: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 border-red-200 dark:border-red-800",
+    dot: "bg-red-500",
+  },
 };
 
 export default function AddTodo({ onAdd }) {
@@ -14,6 +24,7 @@ export default function AddTodo({ onAdd }) {
   const [priority, setPriority] = useState("medium");
   const [dueDate, setDueDate] = useState("");
   const [showOptions, setShowOptions] = useState(false);
+  const [focused, setFocused] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -26,65 +37,112 @@ export default function AddTodo({ onAdd }) {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+    <motion.div
+      animate={{
+        boxShadow: focused
+          ? "0 0 0 3px rgba(139, 92, 246, 0.15), 0 4px 24px rgba(139, 92, 246, 0.1)"
+          : "0 1px 3px rgba(0,0,0,0.06)",
+      }}
+      transition={{ duration: 0.2 }}
+      className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+    >
       <form onSubmit={handleSubmit}>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-3 px-4 py-3.5">
+          {/* Plus icon */}
+          <motion.div
+            animate={{ rotate: focused ? 45 : 0, scale: focused ? 1.1 : 1 }}
+            transition={{ duration: 0.2 }}
+            className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-md shadow-violet-500/25"
+          >
+            <FiPlus className="w-4 h-4 text-white" strokeWidth={2.5} />
+          </motion.div>
+
           <input
             type="text"
             value={text}
             onChange={(e) => setText(e.target.value)}
-            onFocus={() => setShowOptions(true)}
+            onFocus={() => { setFocused(true); setShowOptions(true); }}
+            onBlur={() => setFocused(false)}
             placeholder="Add a new task..."
-            className="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm"
+            className="flex-1 bg-transparent text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none text-sm font-medium"
           />
+
+          <AnimatePresence>
+            {text.trim() && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8, x: 8 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.8, x: 8 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                type="submit"
+                className="px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-semibold rounded-xl shadow-md shadow-violet-500/25 flex-shrink-0"
+              >
+                Add task
+              </motion.button>
+            )}
+          </AnimatePresence>
+
           <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            type="submit"
-            disabled={!text.trim()}
-            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition text-sm font-medium flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            type="button"
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setShowOptions(!showOptions)}
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors flex-shrink-0"
           >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:block">Add</span>
+            <motion.div animate={{ rotate: showOptions ? 180 : 0 }} transition={{ duration: 0.2 }}>
+              <FiChevronDown className="w-4 h-4" />
+            </motion.div>
           </motion.button>
         </div>
 
-        {showOptions && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mt-3 flex flex-wrap gap-3 items-center"
-          >
-            <div className="flex items-center gap-1.5">
-              {priorities.map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setPriority(p)}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize transition ${
-                    priority === p
-                      ? priorityColors[p]
-                      : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
+        {/* Options panel */}
+        <AnimatePresence>
+          {showOptions && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              className="overflow-hidden"
+            >
+              <div className="px-4 pb-4 pt-1 border-t border-slate-100 dark:border-slate-800 flex flex-wrap gap-4 items-center">
+                {/* Priority */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-slate-400 font-medium mr-1">Priority:</span>
+                  {priorities.map((p) => (
+                    <motion.button
+                      key={p}
+                      type="button"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setPriority(p)}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold capitalize border transition-all ${
+                        priority === p
+                          ? priorityConfig[p].active
+                          : "bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300"
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${priority === p ? priorityConfig[p].dot : "bg-slate-300 dark:bg-slate-600"}`} />
+                      {p}
+                    </motion.button>
+                  ))}
+                </div>
 
-            <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
-              <Calendar className="w-3.5 h-3.5" />
-              <input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="text-xs bg-transparent border-none outline-none text-gray-600 dark:text-gray-300 cursor-pointer"
-              />
-            </div>
-          </motion.div>
-        )}
+                {/* Due date */}
+                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                  <FiCalendar className="w-3.5 h-3.5" />
+                  <input
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    className="text-xs bg-transparent border-none outline-none text-slate-600 dark:text-slate-300 cursor-pointer"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </form>
-    </div>
+    </motion.div>
   );
 }

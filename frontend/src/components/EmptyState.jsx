@@ -1,28 +1,65 @@
 import { motion } from "framer-motion";
+import { FiCheckCircle, FiClock, FiInbox } from "react-icons/fi";
 
-const messages = {
-  all: { title: "No tasks yet", sub: "Add your first task above to get started." },
-  active: { title: "All caught up!", sub: "No active tasks. Time to relax." },
-  completed: { title: "Nothing completed yet", sub: "Complete a task and it'll show up here." },
+const states = {
+  all: {
+    icon: FiInbox,
+    title: "No tasks yet",
+    sub: "Add your first task above to get started.",
+    color: "text-violet-500",
+    bg: "bg-violet-50 dark:bg-violet-950/30",
+  },
+  active: {
+    icon: FiCheckCircle,
+    title: "All caught up!",
+    sub: "No active tasks. You're on top of everything.",
+    color: "text-emerald-500",
+    bg: "bg-emerald-50 dark:bg-emerald-950/30",
+  },
+  completed: {
+    icon: FiClock,
+    title: "Nothing completed yet",
+    sub: "Complete a task and it'll show up here.",
+    color: "text-amber-500",
+    bg: "bg-amber-50 dark:bg-amber-950/30",
+  },
 };
 
 export default function EmptyState({ filter }) {
-  const { title, sub } = messages[filter] || messages.all;
+  const state = states[filter] || states.all;
+  const Icon = state.icon;
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="flex flex-col items-center justify-center py-16 text-center"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="flex flex-col items-center justify-center py-20 text-center"
     >
-      <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
-        <svg className="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-      </div>
-      <p className="text-gray-700 dark:text-gray-300 font-medium">{title}</p>
-      <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">{sub}</p>
+      <motion.div
+        initial={{ scale: 0.8 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 0.1, type: "spring", stiffness: 300 }}
+        className={`w-16 h-16 rounded-2xl ${state.bg} flex items-center justify-center mb-5`}
+      >
+        <Icon className={`w-8 h-8 ${state.color}`} />
+      </motion.div>
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="text-slate-700 dark:text-slate-300 font-semibold text-base"
+      >
+        {state.title}
+      </motion.p>
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.25 }}
+        className="text-sm text-slate-400 dark:text-slate-500 mt-1.5 max-w-xs"
+      >
+        {state.sub}
+      </motion.p>
     </motion.div>
   );
 }

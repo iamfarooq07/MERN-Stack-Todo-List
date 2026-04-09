@@ -1,5 +1,6 @@
-import { CheckSquare, Sun, Moon, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
+import { HiSparkles } from "react-icons/hi2";
+import { FiSun, FiMoon, FiLogOut } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useNavigate } from "react-router";
@@ -12,42 +13,74 @@ export default function Header() {
 
   const handleLogout = () => {
     logout();
-    toast.success("Logged out");
+    toast.success("See you soon!");
     navigate("/login");
   };
 
+  const initials = user?.name
+    ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    : "U";
+
   return (
-    <header className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200 dark:border-gray-800">
-      <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <CheckSquare className="w-5 h-5 text-blue-600" />
-          <span className="font-bold text-gray-900 dark:text-white">Taskly</span>
+    <motion.header
+      initial={{ y: -60, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80"
+    >
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        {/* Logo */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-md shadow-violet-500/30">
+            <HiSparkles className="w-4 h-4 text-white" />
+          </div>
+          <span className="text-lg font-black tracking-tight text-slate-900 dark:text-white">
+            Taskly
+          </span>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
-            {user?.name}
-          </span>
+        {/* Right side */}
+        <div className="flex items-center gap-2">
+          {/* User avatar + name */}
+          <div className="hidden sm:flex items-center gap-2.5 mr-1">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
+              {initials}
+            </div>
+            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+              {user?.name}
+            </span>
+          </div>
 
+          {/* Theme toggle */}
           <motion.button
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.9, rotate: 15 }}
             onClick={toggle}
-            className="p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
             aria-label="Toggle theme"
           >
-            {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            <motion.div
+              key={dark ? "sun" : "moon"}
+              initial={{ rotate: -90, opacity: 0 }}
+              animate={{ rotate: 0, opacity: 1 }}
+              transition={{ duration: 0.25 }}
+            >
+              {dark ? <FiSun className="w-4 h-4" /> : <FiMoon className="w-4 h-4" />}
+            </motion.div>
           </motion.button>
 
+          {/* Logout */}
           <motion.button
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
             onClick={handleLogout}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all"
           >
-            <LogOut className="w-4 h-4" />
+            <FiLogOut className="w-4 h-4" />
             <span className="hidden sm:block">Logout</span>
           </motion.button>
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 }

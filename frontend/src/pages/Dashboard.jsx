@@ -1,16 +1,33 @@
 import { useState, useEffect, useMemo } from "react";
-import { AnimatePresence } from "framer-motion";
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import toast from "react-hot-toast";
 import api from "../api/axios";
 import Header from "../components/Header";
 import AddTodo from "../components/AddTodo";
 import TodoItem from "../components/TodoItem";
 import EmptyState from "../components/EmptyState";
-import { Search, X } from "lucide-react";
+import { FiSearch, FiX, FiTrash2 } from "react-icons/fi";
+import { HiOutlineClipboardList } from "react-icons/hi";
 
 const FILTERS = ["all", "active", "completed"];
+
+function SkeletonCard() {
+  return (
+    <div className="h-16 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 animate-pulse" />
+  );
+}
 
 export default function Dashboard() {
   const [todos, setTodos] = useState([]);
@@ -18,7 +35,9 @@ export default function Dashboard() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
 
   useEffect(() => {
     fetchTodos();
@@ -81,7 +100,7 @@ export default function Dashboard() {
     setTodos((prev) => prev.filter((t) => !t.completed));
     try {
       await api.delete("/todos/clear-completed");
-      toast.success(`Cleared ${count} completed task${count > 1 ? "s" : ""}`);
+      toast.success(`Cleared ${count} task${count > 1 ? "s" : ""}`);
     } catch {
       toast.error("Failed to clear completed");
       fetchTodos();
@@ -91,12 +110,10 @@ export default function Dashboard() {
   const handleDragEnd = async (event) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-
     const oldIndex = todos.findIndex((t) => t._id === active.id);
     const newIndex = todos.findIndex((t) => t._id === over.id);
     const reordered = arrayMove(todos, oldIndex, newIndex);
     setTodos(reordered);
-
     try {
       await Promise.all(
         reordered.map((todo, i) => api.put(`/todos/${todo._id}`, { order: i }))
@@ -113,95 +130,208 @@ export default function Dashboard() {
         if (filter === "completed") return t.completed;
         return true;
       })
-      .filter((t) => !search || t.text.toLowerCase().includes(search.toLowerCase()));
+      .filter(
+        (t) =>
+          !search || t.text.toLowerCase().includes(search.toLowerCase())
+      );
   }, [todos, filter, search]);
 
   const activeCount = todos.filter((t) => !t.completed).length;
   const completedCount = todos.filter((t) => t.completed).length;
+  const totalCount = todos.length;
+  const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <Header />
 
-      <main className="max-w-2xl mx-auto px-4 py-8">
-        {/* Stats */}
-        <div className="mb-6">
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">My Tasks</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+        {/* Page header */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="mb-8"
+        >
+          <div className="flex items-center gap-3 mb-1">
+            <HiOutlineClipboardList className="w-6 h-6 text-violet-500" />
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+              My Tasks
+            </h1>
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400 ml-9">
             {activeCount} remaining · {completedCount} completed
           </p>
-        </div>
+
+          {/* Progress bar */}
+          {totalCount > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="mt-4 ml-9"
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+                  Progress
+                </span>
+                <span className="text-xs font-bold text-violet-600 dark:text-violet-400">
+                  {progressPct}%
+                </span>
+              </div>
+              <div className="h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progressPct}%` }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                  className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full"
+                />
+              </div>
+            </motion.div>
+          )}
+        </motion.div>
+
+        {/* Stats cards */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.4 }}
+          className="grid grid-cols-3 gap-3 mb-6"
+        >
+          {[
+            { label: "Total", value: totalCount, color: "text-slate-700 dark:text-slate-300", bg: "bg-white dark:bg-slate-900" },
+            { label: "Active", value: activeCount, color: "text-violet-600 dark:text-violet-400", bg: "bg-violet-50 dark:bg-violet-950/40" },
+            { label: "Done", value: completedCount, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/40" },
+          ].map(({ label, value, color, bg }) => (
+            <div key={label} className={`${bg} rounded-2xl border border-slate-200 dark:border-slate-800 p-4 text-center`}>
+              <p className={`text-2xl font-black ${color}`}>{value}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">{label}</p>
+            </div>
+          ))}
+        </motion.div>
 
         {/* Add Todo */}
-        <div className="mb-4">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: 0.4 }}
+          className="mb-4"
+        >
           <AddTodo onAdd={addTodo} />
-        </div>
+        </motion.div>
 
         {/* Search */}
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+          className="relative mb-4"
+        >
+          <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search tasks..."
-            className="w-full pl-9 pr-9 py-2.5 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm"
+            className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 dark:focus:border-violet-600 transition-all text-sm"
           />
-          {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
+          <AnimatePresence>
+            {search && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                onClick={() => setSearch("")}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              >
+                <FiX className="w-4 h-4" />
+              </motion.button>
+            )}
+          </AnimatePresence>
+        </motion.div>
 
         {/* Filter tabs + clear */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25, duration: 0.4 }}
+          className="flex items-center justify-between mb-5"
+        >
+          <div className="flex gap-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl p-1">
             {FILTERS.map((f) => (
-              <button
+              <motion.button
                 key={f}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => setFilter(f)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium capitalize transition ${
+                className={`relative px-3.5 py-1.5 rounded-lg text-sm font-semibold capitalize transition-all ${
                   filter === f
-                    ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                    ? "text-slate-900 dark:text-white"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                 }`}
               >
-                {f}
-                {f === "active" && activeCount > 0 && (
-                  <span className="ml-1.5 text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-full">
-                    {activeCount}
-                  </span>
+                {filter === f && (
+                  <motion.div
+                    layoutId="filter-pill"
+                    className="absolute inset-0 bg-white dark:bg-slate-700 rounded-lg shadow-sm"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
                 )}
-              </button>
+                <span className="relative z-10 flex items-center gap-1.5">
+                  {f}
+                  {f === "active" && activeCount > 0 && (
+                    <span className="text-xs bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-400 px-1.5 py-0.5 rounded-full font-bold">
+                      {activeCount}
+                    </span>
+                  )}
+                </span>
+              </motion.button>
             ))}
           </div>
 
-          {completedCount > 0 && (
-            <button
-              onClick={clearCompleted}
-              className="text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition"
-            >
-              Clear completed
-            </button>
-          )}
-        </div>
+          <AnimatePresence>
+            {completedCount > 0 && (
+              <motion.button
+                initial={{ opacity: 0, x: 8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 8 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={clearCompleted}
+                className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30"
+              >
+                <FiTrash2 className="w-3.5 h-3.5" />
+                Clear done
+              </motion.button>
+            )}
+          </AnimatePresence>
+        </motion.div>
 
         {/* Todo list */}
         {loading ? (
           <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-16 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 animate-pulse" />
+            {[1, 2, 3, 4].map((i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.07 }}
+              >
+                <SkeletonCard />
+              </motion.div>
             ))}
           </div>
         ) : filtered.length === 0 ? (
           <EmptyState filter={search ? "all" : filter} />
         ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={filtered.map((t) => t._id)} strategy={verticalListSortingStrategy}>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={filtered.map((t) => t._id)}
+              strategy={verticalListSortingStrategy}
+            >
               <div className="space-y-2">
                 <AnimatePresence mode="popLayout">
                   {filtered.map((todo) => (
