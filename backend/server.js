@@ -16,6 +16,6 @@ connectDatabase();
 app.use("/api", route);
 app.use("/api/todos", todoRoute);
 
-app.listen(port, () => {
+app.listen(port, (req, res) => {
     console.log(`Server running on port ${port}`);
 });
