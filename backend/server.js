@@ -11,11 +11,17 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-connectDatabase();
+// connectDatabase();
+
 
 app.use("/api", route);
 app.use("/api/todos", todoRoute);
 
-app.listen(port, (req, res) => {
-    console.log(`Server running on port ${port}`);
-});
+connectDatabase().then(() => {
+    app.listen(port, (req, res) => {
+        console.log(`Server running on port ${port}`);
+    });
+}).catch((error) => {
+    console.log(error);
+
+})
