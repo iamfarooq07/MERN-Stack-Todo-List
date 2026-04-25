@@ -8,10 +8,11 @@ import { todoRoute } from "./Route/todoRoute.js";
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());
 
-// connectDatabase();
+app.use(cors({
+    origin: process.env.FRONTEND_URI
+}));
+app.use(express.json());
 
 
 app.use("/api", route);
